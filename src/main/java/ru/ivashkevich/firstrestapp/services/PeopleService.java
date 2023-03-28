@@ -31,7 +31,7 @@ public class PeopleService {
     }
 
     @Transactional
-    public void create(Person person){
+    public void save(Person person){
         peopleRepository.save(person);
     }
 

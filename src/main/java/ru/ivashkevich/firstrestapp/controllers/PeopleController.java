@@ -1,12 +1,13 @@
 package ru.ivashkevich.firstrestapp.controllers;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 import ru.ivashkevich.firstrestapp.models.Person;
 import ru.ivashkevich.firstrestapp.services.PeopleService;
+import ru.ivashkevich.firstrestapp.util.PersonErrorResponse;
+import ru.ivashkevich.firstrestapp.util.PersonNotFoundException;
 
 import java.util.List;
 
@@ -29,5 +30,12 @@ public class PeopleController {
     @GetMapping("/{id}")
     public Person getPerson(@PathVariable int id){
         return peopleService.getPersonById(id);
+    }
+
+    @ExceptionHandler
+    private ResponseEntity<PersonErrorResponse> handleException(PersonNotFoundException ex){
+        PersonErrorResponse response = new PersonErrorResponse("Person with this id wasn't found!", System.currentTimeMillis());
+
+        return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
     }
 }

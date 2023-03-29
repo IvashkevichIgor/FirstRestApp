@@ -1,12 +1,14 @@
 package ru.ivashkevich.firstrestapp.controllers;
 
 import jakarta.validation.Valid;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.*;
+import ru.ivashkevich.firstrestapp.dto.PersonDTO;
 import ru.ivashkevich.firstrestapp.models.Person;
 import ru.ivashkevich.firstrestapp.services.PeopleService;
 import ru.ivashkevich.firstrestapp.util.PersonErrorResponse;
@@ -14,30 +16,33 @@ import ru.ivashkevich.firstrestapp.util.PersonNotCreatedException;
 import ru.ivashkevich.firstrestapp.util.PersonNotFoundException;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/people")
 public class PeopleController {
 
     private final PeopleService peopleService;
+    private final ModelMapper modelMapper;
 
     @Autowired
-    public PeopleController(PeopleService peopleService) {
+    public PeopleController(PeopleService peopleService, ModelMapper modelMapper) {
         this.peopleService = peopleService;
+        this.modelMapper = modelMapper;
     }
 
     @GetMapping
-    public List<Person> getAllPeople(){
-        return peopleService.getAllPeople();
+    public List<PersonDTO> getAllPeople(){
+        return peopleService.getAllPeople().stream().map(this::convertToPersonDTO).collect(Collectors.toList());
     }
 
     @GetMapping("/{id}")
-    public Person getPerson(@PathVariable int id){
-        return peopleService.getPersonById(id);
+    public PersonDTO getPerson(@PathVariable int id){
+        return convertToPersonDTO(peopleService.getPersonById(id));
     }
 
     @PostMapping
-    public ResponseEntity<HttpStatus> create(@RequestBody @Valid Person person, BindingResult bindingResult){
+    public ResponseEntity<HttpStatus> create(@RequestBody @Valid PersonDTO personDTO, BindingResult bindingResult){
         if (bindingResult.hasErrors()){
             StringBuilder errorMessages = new StringBuilder();
 
@@ -52,7 +57,7 @@ public class PeopleController {
 
             throw new PersonNotCreatedException(errorMessages.toString());
         }
-        peopleService.save(person);
+        peopleService.save(convertToPerson(personDTO));
 
         return ResponseEntity.ok(HttpStatus.OK);
     }
@@ -69,5 +74,13 @@ public class PeopleController {
         PersonErrorResponse response = new PersonErrorResponse(ex.getMessage(), System.currentTimeMillis());
 
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+    }
+
+    private Person convertToPerson(PersonDTO personDTO){
+        return modelMapper.map(personDTO, Person.class);
+    }
+
+    private PersonDTO convertToPersonDTO(Person person){
+        return modelMapper.map(person, PersonDTO.class);
     }
 }

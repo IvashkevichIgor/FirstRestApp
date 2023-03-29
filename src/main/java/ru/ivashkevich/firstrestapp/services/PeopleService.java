@@ -8,6 +8,7 @@ import ru.ivashkevich.firstrestapp.models.Person;
 import ru.ivashkevich.firstrestapp.repositories.PeopleRepository;
 import ru.ivashkevich.firstrestapp.util.PersonNotFoundException;
 
+import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 
@@ -32,6 +33,7 @@ public class PeopleService {
 
     @Transactional
     public void save(Person person){
+        enrichPerson(person);
         peopleRepository.save(person);
     }
 
@@ -44,5 +46,11 @@ public class PeopleService {
     @Transactional
     public void delete(int id){
         peopleRepository.deleteById(id);
+    }
+
+    private void enrichPerson(Person person){
+        person.setCreatedAt(LocalDateTime.now());
+        person.setUpdatedAt(LocalDateTime.now());
+        person.setCreatedWho("ADMIN");
     }
 }
